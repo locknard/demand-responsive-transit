@@ -434,6 +434,8 @@ def var_y(p,q,i,j):
     if core_var_y[p][q][i][j] is 0:
         core_var_y[p][q][i][j]=lp.LpVariable('Y_%d_%d_%d_%d'%(p,q,i,j),0,1,cat='Integer')
     return core_var_y[p][q][i][j]
+def result_stat(my_prob):
+    pass
 #initialization
 request=np.load('experiment_%d/request.npy' % experiment)
 max_iteration=segment_request(request)
@@ -594,6 +596,7 @@ while iteration<=max_iteration:
     print 'Solve iteration %d' % iteration
     my_prob.solve()
     show_result(my_prob)
+    result_stat(my_prob)
     iteration+=1
     # interpret
     interpret_result(my_prob)
