@@ -46,6 +46,6 @@ dDist=distance.cdist(R3.iloc[:,3:5].values,station_mat)
 oStation=oDist.argmin(axis=1)
 dStation=dDist.argmin(axis=1)
 t0=((R3['t0']-initialTime)//120.0).values
-newR=pd.DataFrame.from_items([('o',oStation),('d',dStation),('t0',t0)])
+newR=pd.DataFrame.from_items([('t0',t0),('o',oStation),('d',dStation),])
 np.save('request_%d_%d-%d.npy'% (ref_cell,initialTime/3600,endTime/3600),newR.values)
 print 1
