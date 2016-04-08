@@ -11,12 +11,14 @@ side_length=5
 optimal_interval=5 #5*2=10 min
 experiment=2
 default_pos=12
-vehicle_num=10
+vehicle_num=15
 if len(sys.argv)>1:
     experiment=sys.argv[1]
     side_length=sys.argv[2]
     optimal_interval=sys.argv[3]
-
+    vehicle_num=sys.argv[4]
+#global statistics
+unfulfilled=0
 iteration=0
 #这部分以后用
 # while(True):
@@ -302,16 +304,7 @@ def show_result(my_prob):
         if(x!=0 and my_prob.variables.get_names(i)[0:2]=='X_'):
             print "Solution values of ",my_prob.variables.get_names(i),' = ',x
     for i,x in enumerate(my_prob.solution.get_values()):
-        if(x!=0 and my_prob.variables.get_names(i)[0:3]=='Y_0'):
-            print "Solution values of ",my_prob.variables.get_names(i),' = ',x
-    for i,x in enumerate(my_prob.solution.get_values()):
-        if(x!=0 and my_prob.variables.get_names(i)[0:3]=='Y_1'):
-            print "Solution values of ",my_prob.variables.get_names(i),' = ',x
-    for i,x in enumerate(my_prob.solution.get_values()):
-        if(x!=0 and my_prob.variables.get_names(i)[0:3]=='Y_2'):
-            print "Solution values of ",my_prob.variables.get_names(i),' = ',x
-    for i,x in enumerate(my_prob.solution.get_values()):
-        if(x!=0 and my_prob.variables.get_names(i)[0:3]=='Y_3'):
+        if(x!=0 and my_prob.variables.get_names(i)[0:2]=='Y_'):
             print "Solution values of ",my_prob.variables.get_names(i),' = ',x
 def my_dicts(name,indexs,lowBound = None,upBound = None,cat = lp.LpContinuous,indexStart=[]):
         if not isinstance(indexs, tuple): indexs = (indexs,)
@@ -382,8 +375,8 @@ def interpret_result(prob):
     #vehicle
     new_vehicle_list=[]
     for q in core_vehicle_list[1:]:
-        route=[[int(prob.variables.get_names(i).split('_')[2]),int(prob.variables.get_names(i).split('_')[3])] for i,x in enumerate(prob.solution.get_values()) if(x!=0 and prob.variables.get_names(i).split('_')[0:2]==['X',str(q.index)])]
-        route2=reduce_route(route)
+        route=[[int(prob.variables.get_names(i).split('_')[2]),int(prob.variables.get_names(i).split('_')[3])] for i,x in enumerate(prob.solution.get_values()) if(x==1 and prob.variables.get_names(i).split('_')[0:2]==['X',str(q.index)])]
+        # route2=reduce_route(route)
         for r in route:
             if r[0] in index_list:
                 new_vehicle_list.append([q.index,get_node(r[0]).station_index])
@@ -480,6 +473,7 @@ while iteration<=max_iteration:
     # build_dummy_var(var_y)
     # var_x=lp.LpVariable.dicts('X',(var_vehicle_index,var_node_index),0,1,cat='Integer')
     #objective
+    print 'net built'
     prob += lp.lpSum([get_dummy_var(p,net) for p in core_new_passenger_list])
     #build constraint
     #constraint 1
@@ -591,12 +585,15 @@ while iteration<=max_iteration:
             for i in get_passenger_area(p,net,5):
                 for j in i.out_node:
                     prob+= var_x(q.index,i.node_index,j.node_index) - var_y(p.index,q.index,i.node_index,j.node_index) >=0,''
+    print 'constraint built'
     prob.writeLP('experiment_%d/iteration_%d.lp'%(experiment,iteration))
     my_prob = cplex.Cplex('experiment_%d/iteration_%d.lp'%(experiment,iteration))
     print 'Solve iteration %d' % iteration
     my_prob.solve()
+    unfulfilled+=my_prob.solution.get_objective_value()
     show_result(my_prob)
     result_stat(my_prob)
     iteration+=1
     # interpret
     interpret_result(my_prob)
+print unfulfilled

@@ -11,7 +11,7 @@ side_length=5
 optimal_interval=5 #5*2=10 min
 experiment=3
 default_pos=12
-vehicle_num=2
+vehicle_num=3
 
 if len(sys.argv)>1:
     experiment=sys.argv[1]
@@ -19,7 +19,7 @@ if len(sys.argv)>1:
     optimal_interval=sys.argv[3]
 #global statistics
 unfulfilled=0
-iteration=10
+iteration=8
 #这部分以后用
 # while(True):
 #     if os.path.exists('experiment_%d' %experiment):
@@ -388,7 +388,7 @@ def interpret_result(prob):
     #vehicle
     new_vehicle_list=[]
     for q in core_vehicle_list[1:]:
-        route=[[int(prob.variables.get_names(i).split('_')[2]),int(prob.variables.get_names(i).split('_')[3])] for i,x in enumerate(prob.solution.get_values()) if(x!=0 and prob.variables.get_names(i).split('_')[0:2]==['X',str(q.index)])]
+        route=[[int(prob.variables.get_names(i).split('_')[2]),int(prob.variables.get_names(i).split('_')[3])] for i,x in enumerate(prob.solution.get_values()) if(x>=0.999 and prob.variables.get_names(i).split('_')[0:2]==['X',str(q.index)])]
         # route2=reduce_route(route)
         for r in route:
             if r[0] in index_list:
@@ -525,16 +525,15 @@ while iteration<=max_iteration:
     #5a&c
     for p in core_new_passenger_list+core_determined_passenger_list:
         for i in get_passenger_area(p,net,3):
-            for q in vehicle[1:]:
-                a=lp.lpSum([var_y(p.index,q.index,g.node_index,i.node_index) for g in i.in_node])
-                b=lp.lpSum([var_y(p.index,q.index,i.node_index,k.node_index) for k in i.out_node])
-                prob+= a+var_y(p.index,0,i.in_node[-1].node_index,i.node_index)-var_y(p.index,0,i.node_index,i.out_node[-1].node_index)-b == 0,''
+            a=lp.lpSum([var_y(p.index,q.index,g.node_index,i.node_index) for q in vehicle[1:] for g in i.in_node])
+            b=lp.lpSum([var_y(p.index,q.index,i.node_index,k.node_index) for q in vehicle[1:] for k in i.out_node])
+            prob+= a+var_y(p.index,0,i.in_node[-1].node_index,i.node_index)-var_y(p.index,0,i.node_index,i.out_node[-1].node_index)-b == 0,''
     #5b
     for p in core_boarded_passenger_list:
         for i in get_passenger_area(p,net,2):
             for q in vehicle[1:]:
-                a=lp.lpSum([var_y(p.index,q.index,g.node_index,i.node_index) for g in i.in_node])
-                b=lp.lpSum([var_y(p.index,q.index,i.node_index,k.node_index) for k in i.out_node])
+                a=lp.lpSum([var_y(p.index,q.index,g.node_index,i.node_index) for q in vehicle[1:] for g in i.in_node])
+                b=lp.lpSum([var_y(p.index,q.index,i.node_index,k.node_index) for q in vehicle[1:] for k in i.out_node])
                 prob+= a+var_y(p.index,0,i.in_node[-1].node_index,i.node_index)-var_y(p.index,0,i.node_index,i.out_node[-1].node_index)-b == 0,''
     #constraint 6
     for p in core_new_passenger_list+core_determined_passenger_list:
@@ -613,7 +612,7 @@ while iteration<=max_iteration:
     my_prob = cplex.Cplex('experiment_%d/iteration_%d.lp'%(experiment,iteration))
     my_prob.solve()
     unfulfilled+=my_prob.solution.get_objective_value()
-    # show_result(my_prob)
+    show_result(my_prob)
     iteration+=1
     # interpret
     interpret_result(my_prob)
