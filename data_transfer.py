@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 import math
 import scipy.spatial.distance as distance
+import sys
 
 def cellAxis2Num(x,y,ynum):#(x,y)
     return ynum*x+y
@@ -17,15 +18,19 @@ def manhattan_ETA(o,d,t0):
     dy=d//side_length
     return t0+np.ceil((abs(dx-ox)+abs(dy-oy))*1.5)
 RADIUS=6378.140
-initialTime=36000
-endTime=43200
+initialTime=28800
+endTime=36000
 down=39.068995
 left=115.602595
-filename='Reduced20151122'
-up_left_point=[39.8935486,116.4616619]
+filename='Reduced20151124'
+# up_left_point=[39.8935486,116.4616619] # subway shuangjing
+up_left_point=[40.0980301,116.3158453] #huilongguan
 prec=1.0
-side_length=5
+side_length=4
 time_prec=120.0
+
+if len(sys.argv)>1:
+    side_length=int(sys.argv[1])
 
 R=pd.read_csv(filename,index_col=0)
 del R['mode']
@@ -47,5 +52,6 @@ oStation=oDist.argmin(axis=1)
 dStation=dDist.argmin(axis=1)
 t0=((R3['t0']-initialTime)//120.0).values
 newR=pd.DataFrame.from_items([('t0',t0),('o',oStation),('d',dStation),])
+newR=newR[newR['o']!=newR['d']]
+print len(newR)
 np.save('request_%d_%d-%d.npy'% (ref_cell,initialTime/3600,endTime/3600),newR.values)
-print 1

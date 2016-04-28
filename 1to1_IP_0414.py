@@ -6,6 +6,7 @@ import cplex
 import copy
 import os
 import sys
+import time
 from PyQt4 import QtGui,QtCore
 #常量
 side_length=4
@@ -13,7 +14,7 @@ optimal_interval=5 #5*2=10 min
 experiment=5
 default_pos=6
 vehicle_num=4
-max_vehicle=20
+max_vehicle=4
 if len(sys.argv)>1:
     experiment=sys.argv[1]
     side_length=sys.argv[2]
@@ -474,6 +475,7 @@ max_iteration=segment_request(request)
 #main
 unfulfilled_stat=[]
 for i in range(1,max_vehicle+1):
+    runtime_stat=[]
     vehicle_num=i
     unfulfilled=0
     iteration=0
@@ -645,7 +647,10 @@ for i in range(1,max_vehicle+1):
         prob.writeLP('experiment_%d/iteration_%d.lp'%(experiment,iteration))
         my_prob = cplex.Cplex('experiment_%d/iteration_%d.lp'%(experiment,iteration))
         print 'Solve iteration %d' % iteration
+        st=time.clock()
         my_prob.solve()
+        ft=time.clock()
+        runtime_stat.append(ft-st)
         unfulfilled+=my_prob.solution.get_objective_value()
         # interpret
         iteration+=1
@@ -654,3 +659,5 @@ for i in range(1,max_vehicle+1):
         result_stat(my_prob)
     unfulfilled_stat.append(unfulfilled)
 print unfulfilled_stat
+rsa=np.array(runtime_stat)
+print rsa.mean()
