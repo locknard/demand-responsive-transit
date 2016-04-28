@@ -9,9 +9,9 @@ import sys
 from PyQt4 import QtGui,QtCore
 #常量
 side_length=4
-optimal_interval=30 #5*2=10 min
+optimal_interval=15 #5*2=10 min
 candidate_interval=[2,3,4,5,6,8,10,20,30,40]
-experiment=9
+experiment=10
 default_pos=6
 vehicle_num=4
 max_vehicle=15
@@ -636,7 +636,8 @@ for i in range(min_vehicle,max_vehicle+1):
         print 'constraint built'
         prob.writeLP('experiment_%d/iteration_%d.lp'%(experiment,iteration))
         my_prob = cplex.Cplex('experiment_%d/iteration_%d.lp'%(experiment,iteration))
-        my_prob.parameters.mip.tolerances.relobjdifference.set(0.01)
+        my_prob.parameters.mip.tolerances.relobjdifference.set(0.02)
+        my_prob.parameters.mip.tolerances.objdifference.set(2)
         my_prob.parameters.mip.tolerances.mipgap.set(0.05)
         my_prob.parameters.mip.strategy.variableselect.set(3)
         my_prob.parameters.emphasis.mip.set(1)
